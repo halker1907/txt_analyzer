@@ -1,42 +1,37 @@
-﻿"""
-скачать текст
-загрузить ТХТ файл
-ТОП 10/20 глаголов/существительных/прилагательных в этом тексте
-создать картинку - облако слов
-"""
+﻿import re
 
-class TextAnalyzer:
-    def __init__(self, file_name="text.txt", mode="r", encoding="UTF-8"):
+
+class TextAnalyze:
+    def __init__(self, file_name=None):
         if file_name is None:
             raise Exception("Не указан файл для анализа!")
-        self.file_name = file_name
-        self.mode = mode
-        self.encoding = encoding
-        self.read_file()
+        self.read_file(file_name)
+        self.check_empty_text()
         self.prepare_text()
         self.print_text()
 
-    def read_file(self):
-        """ Пытается открыть файл и считать его в строку """
+    def read_file(self, file_name):
+        """ пытается открыть файл и считать его в строку """
         try:
-            with open(self.file_name, self.mode, encoding=self.encoding) as file:
-                self.content = file
-                self.text = self.content.read()
+            with open(file_name, "r", encoding="UTF-8") as content:
+                self.file = content  # здесь получается файловый объект
+                self.text = self.file.read()  # здесь получается строка текста
         except FileNotFoundError:
-            raise Exception(f"Файл {self.file_name} не найден!")
-        
+            raise Exception(f"Файл {file_name} не найден!")
+
+    def check_empty_text(self):
         if not self.text:
-            raise Exception("Файл пустой!")
+            raise RuntimeError(f"Файл {self.file} пуст, попробуйте другой файл")
 
     def prepare_text(self):
-        """ Приводит текст к нижнему регистру """
         self.text = self.text.lower()
-
+        self.clean_text = ''.join(re.findall(r'[\w\s-]', self.text))
+        self.words = self.text.split()
+        
     def print_text(self):
-        """ Выводит строку текста на экран """
-        print(self.text)
-
-TextAnalyzer()
-
+        """ выводит строку текста на экран """
+        print(self.clean_text)
+        print(f"В этом тексте {len(self.words)} слов")
 
 
+TextAnalyze(file_name="text.txt")
