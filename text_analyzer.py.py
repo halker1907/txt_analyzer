@@ -1,37 +1,61 @@
-﻿import re
+﻿from typing import NoReturn
+from string import punctuation
+import re
+import pymorphy3
 
 
-class TextAnalyze:
-    def __init__(self, file_name=None):
+"""
+скачать текст
+загрузить ТХТ файл
+ТОП 10/20 глаголов/существительных/прилагательных в этом тексте
+создать картинку - облако слов
+"""
+
+class TextAnalyzer:
+    def __init__(self, file_name="text.txt", mode="r", encoding="UTF-8", pos_list=["VERB", "NOUN"]) -> None:
         if file_name is None:
             raise Exception("Не указан файл для анализа!")
-        self.read_file(file_name)
-        self.check_empty_text()
+        self.file_name = file_name
+        self.mode = mode
+        self.encoding = encoding
+        self.pos_list = pos_list
+        self.read_file()
+        self.check_empty_file()
         self.prepare_text()
+        self.sorting_words()
         self.print_text()
 
-    def read_file(self, file_name):
-        """ пытается открыть файл и считать его в строку """
+    def read_file(self) -> None | NoReturn:
+        """ Пытается открыть файл и считать его в строку """
         try:
-            with open(file_name, "r", encoding="UTF-8") as content:
-                self.file = content  # здесь получается файловый объект
-                self.text = self.file.read()  # здесь получается строка текста
+            with open(self.file_name, self.mode, encoding=self.encoding) as file:
+                self.content = file
+                self.text = self.content.read()
         except FileNotFoundError:
-            raise Exception(f"Файл {file_name} не найден!")
+            raise Exception(f"Файл {self.file_name} не найден!")
 
-    def check_empty_text(self):
+    def check_empty_file(self) -> None | NoReturn:
+        """ проверяет пустой ли файл """
         if not self.text:
-            raise RuntimeError(f"Файл {self.file} пуст, попробуйте другой файл")
+            raise RuntimeError(f"Файл {self.file_name} пустой!")
 
     def prepare_text(self):
+        """ Приводит текст к нижнему регистру и убирает все лишние знаки препинания """
         self.text = self.text.lower()
-        self.clean_text = ''.join(re.findall(r'[\w\s-]', self.text))
-        self.words = self.text.split()
-        
-    def print_text(self):
-        """ выводит строку текста на экран """
-        print(self.clean_text)
-        print(f"В этом тексте {len(self.words)} слов")
+        self.words = re.findall(r'\b[\w-]+\b', self.text)
 
+    def sorting_words(self) -> list:
+        morph = pymorphy3.MorphAnalyzer()
+        self.words_by_pos = []
 
-TextAnalyze(file_name="text.txt")
+        for word in self.words:
+            parsed_word = morph.parse(word)[0]
+            pos = parsed_word.tag.POS
+            if pos in self.pos_list:
+                self.words_by_pos.append(parsed_word.normal_form)
+
+    def print_text(self) -> None:
+        """ Выводит строку текста на экран """
+        print(self.words_by_pos)
+
+TextAnalyzer(file_name = “text.txt”)
